@@ -1,0 +1,5 @@
+
+./ana.S.R \
+../../data/161208/iband.bjd
+
+
