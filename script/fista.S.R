@@ -7,7 +7,10 @@
 ###
 ###
 
+options(digits=10)
 mitooldir = "/home/morii/work/github/moriiism/mitool"
+
+library(grplasso)
 
 ###
 
@@ -107,41 +110,47 @@ infile   = args[1]
 data.df <- read.table(infile, comment.char = "#")
 printf("ncol(data.df) = %d\n", ncol(data.df))
 printf("nrow(data.df) = %d\n", nrow(data.df))
+nrow = nrow(data.df)
 
-### Head of data.df
-data.df = head(data.df, 1000)
-printf("ncol(data.df) = %d\n", ncol(data.df))
-printf("nrow(data.df) = %d\n", nrow(data.df))
 
-###
-
-N = nrow(data.df)
-
-freq.lo =  5.e-2
-freq.up =  9.e+4
-nfreq = 500
+freq.lo =  0.1
+# freq.up =  9.e+4
+freq.up =  1.0
+nfreq = 100
 delta.freq = (freq.up - freq.lo) / nfreq
-A.mat = matrix(0.0, nrow=N, ncol=nfreq)
+ncol = nfreq * 2
+A.mat = matrix(0.0, nrow=nrow, ncol=ncol)
 
-for(i in 1:N){
-    for(n in 1:(nfreq/2)){
-        freq = freq.lo + delta.freq * (n - 0.5)
-        A.mat[i, n]           = 2 * delta.freq * cos(2 * pi * freq * data.df[i, 1])
-        A.mat[i, nfreq/2 + n] = 2 * delta.freq * sin(2 * pi * freq * data.df[i, 1])
+for(irow in 1:nrow){
+    for(icol in 1:(ncol/2)){
+        freq = freq.lo + delta.freq * (icol - 0.5)
+        A.mat[irow, icol]          = 2 * delta.freq * cos(2 * pi * freq * data.df[irow, 1])
+        A.mat[irow, ncol/2 + icol] = 2 * delta.freq * sin(2 * pi * freq * data.df[irow, 1])
     }
 }
 print("matrix filled")
 
+### calc lambda.array
+B.mat = cbind(1, A.mat)
+h.vec = as.vector(data.df[,2])
+index.vec = c(NA, 1:(ncol/2), 1:(ncol/2))
+
+lambda <- lambdamax(B.mat, y = h.vec, index = index.vec,
+                    penscale = sqrt, model = LinReg()) * 0.5^(0:10)
+
+lambda
+
+
 eta = 1.2
-h.vec = data.df[1:N,2]
-x = rep(0.0, nfreq)
+h.vec = data.df[1:nrow,2]
+x = rep(0.0, ncol)
 x.pre = x
 y = x
 L = 1e-5
 L.pre = L
-k.max = 100
+k.max = 10
 t = 1
-lambda = 1.3e6
+lambda = 4.862804651
 
 for(k in 1 : k.max){
     printf("k = %d\n", k)
@@ -160,7 +169,13 @@ for(k in 1 : k.max){
     L.pre = L
     printf("L = %e\n", L)
     printf("t = %e\n", t)
-    print(x)
+###    print(x)
     
 }
+
+h.rec.vec = A.mat %*% x
+lc.rec = cbind(data.df[, 1], h.rec.vec)
+write(t(lc.rec), file="rec.dat", ncolumns = 2)
+
+
 
