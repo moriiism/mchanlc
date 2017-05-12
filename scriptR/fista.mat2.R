@@ -297,9 +297,17 @@ fista.mat2 <- function(infile1, infile2, freq.file, mat.file, nlambda)
         N = ncol/4
         delta.time12.vec = numeric(0)
         weight.delta.time12.vec = numeric(0)
+
+        delta.time12.vec.tmp = numeric(0)
+        weight.delta.time12.vec.tmp = numeric(0)
+        period.vec.tmp = numeric(0)
+        
         delta.time1.vec = numeric(0)
         delta.time2.vec = numeric(0)
         isel.vec = numeric(0)
+
+        x.common = rep(0.0, ncol)
+        
         for(i in 1:N){
             if(abs(x[i]) > 0.0  && abs(x[i + N]) > 0.0 && abs(x[i + 2 * N]) > 0.0 && abs(x[i + 3 * N]) > 0.0 ) {
                 freq = freq.lo + delta.freq * (i - 0.5)
@@ -311,12 +319,23 @@ fista.mat2 <- function(infile1, infile2, freq.file, mat.file, nlambda)
                 delta.time12 = delta.time1 - delta.time2
                 weight.delta.time12 = sqrt( x[i]**2 + x[i + N]**2 + x[i + 2 * N]**2 + x[i + 3 * N]**2 )
 
-                printf("delta.time1 = %e\n", delta.time1)
-                printf("delta.time2 = %e\n", delta.time2)                
-                printf("delta.time12 = %e\n", delta.time12)
-                printf("T = %e\n", 1./freq)
+                ## select common between X and Opt
+                if(0.0 < delta.time12 && delta.time12 < 0.01){
+                    x.common[i] = x[i]
+                    x.common[i + N] = x[i + N]
+                    x.common[i + 2 * N] = x[i + 2 * N]
+                    x.common[i + 3 * N] = x[i + 3 * N]
+                }
+                
+                ##printf("delta.time1 = %e\n", delta.time1)
+                ##printf("delta.time2 = %e\n", delta.time2)                
+                ##printf("delta.time12 = %e\n", delta.time12)
+                ##printf("T = %e\n", 1./freq)
+                ##printf("weight.delta.time12 = %e\n", weight.delta.time12)
 
-                printf("weight.delta.time12 = %e\n", weight.delta.time12)
+                delta.time12.vec.tmp = c(delta.time12.vec.tmp, delta.time1 - delta.time2)
+                weight.delta.time12.vec.tmp = c(weight.delta.time12.vec.tmp, weight.delta.time12)
+                period.vec.tmp = c(period.vec.tmp, 1./freq)
                 
                 if(hist.lo < delta.time12 && delta.time12 < hist.up){
                     delta.time12.vec = c(delta.time12.vec, delta.time1 - delta.time2)
@@ -348,7 +367,23 @@ fista.mat2 <- function(infile1, infile2, freq.file, mat.file, nlambda)
 #            outfile = sprintf("rec_%2.2d_sel_%2.2d.dat", ilambda, isel)
 #            write(t(lc.sel.rec), file=outfile, ncolumns = 2)
 #        }
+
+        ##
+        ## lag v.s. norm
+        ##
+        lag.norm = cbind(delta.time12.vec.tmp, weight.delta.time12.vec.tmp)
+        outfile = sprintf("lag_norm_%2.2d.dat", ilambda)
+        write(t(lag.norm), file=outfile, ncolumns = 2)
+
+        ##
+        ## lag v.s. norm v.s. period
+        ##
+        lag.norm = cbind(delta.time12.vec.tmp, weight.delta.time12.vec.tmp, period.vec.tmp)
+        outfile = sprintf("lag_norm_period_%2.2d.dat", ilambda)
+        write(t(lag.norm), file=outfile, ncolumns = 3)
+
         
+       
         h.rec.vec = A.mat %*% x
 
         ##
@@ -362,6 +397,20 @@ fista.mat2 <- function(infile1, infile2, freq.file, mat.file, nlambda)
         outfile = sprintf("x_%2.2d.dat", ilambda)
         x.mat = cbind(c(1:(length(x)/2),1:(length(x)/2)), x)
         write(t(x.mat), file=outfile, ncolumns = 2)
+
+        ##
+        ## common
+        ##
+        h.rec.common.vec = A.mat %*% x.common
+
+        lc.common.rec = cbind(data.df[, 1], h.rec.common.vec)
+        outfile = sprintf("rec_common.%2.2d.dat", ilambda)
+        write(t(lc.common.rec), file=outfile, ncolumns = 2)
+
+        outfile = sprintf("x_common.%2.2d.dat", ilambda)
+        x.common.mat = cbind(c(1:(length(x.common)/2),1:(length(x.common)/2)), x.common)
+        write(t(x.common.mat), file=outfile, ncolumns = 2)
+        
     }
 
     for(ilambda in 1:nlambda){
