@@ -11,7 +11,8 @@ public:
         infile1_(""),
         infile2_(""),
         freq_info_file_(""),
-        outfile_("") {}
+        outdir_(""),
+        outfile_head_("") {}
     ~ArgValMkmat2(){
         Null();
     }
@@ -22,14 +23,16 @@ public:
     string GetInfile1()   const {return infile1_;};
     string GetInfile2()   const {return infile2_;};    
     string GetFreqInfoFile() const {return freq_info_file_;};
-    string GetOutfile()   const {return outfile_;};
+    string GetOutdir()   const {return outdir_;};
+    string GetOutfileHead()   const {return outfile_head_;};
 
 private:
     string progname_;
     string infile1_;
     string infile2_;
     string freq_info_file_;
-    string outfile_;
+    string outdir_;
+    string outfile_head_;
 
     void Null();
     void SetOption(int argc, char* argv[], option* long_options);    

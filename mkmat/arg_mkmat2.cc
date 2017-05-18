@@ -19,7 +19,7 @@ void ArgValMkmat2::Init(int argc, char* argv[])
     if(0 < g_flag_verbose){
         printf("ArgVal::Init: # of arg = %d\n", argc - optind);
     }
-    int narg = 4;
+    int narg = 5;
     if (argc - optind != narg){
         printf("# of arguments must be %d.\n", narg);
         Usage(stdout);
@@ -28,7 +28,8 @@ void ArgValMkmat2::Init(int argc, char* argv[])
     infile1_         = argv[iarg]; iarg++;
     infile2_         = argv[iarg]; iarg++;    
     freq_info_file_  = argv[iarg]; iarg++;
-    outfile_         = argv[iarg]; iarg++;
+    outdir_          = argv[iarg]; iarg++;    
+    outfile_head_    = argv[iarg]; iarg++;
 }
 
 void ArgValMkmat2::Print(FILE* fp) const
@@ -41,7 +42,8 @@ void ArgValMkmat2::Print(FILE* fp) const
     fprintf(fp, "%s: infile1_        : %s\n", __func__, infile1_.c_str());
     fprintf(fp, "%s: infile2_        : %s\n", __func__, infile2_.c_str());    
     fprintf(fp, "%s: freq_info_file_ : %s\n", __func__, freq_info_file_.c_str());
-    fprintf(fp, "%s: outfile_        : %s\n", __func__, outfile_.c_str());
+    fprintf(fp, "%s: outdir_         : %s\n", __func__, outdir_.c_str());
+    fprintf(fp, "%s: outfile_head_   : %s\n", __func__, outfile_head_.c_str());
 }
 
 void ArgValMkmat2::Null()
@@ -50,7 +52,8 @@ void ArgValMkmat2::Null()
     infile1_        = "";
     infile2_        = "";    
     freq_info_file_ = "";
-    outfile_        = "";
+    outdir_         = "";
+    outfile_head_   = "";
 }
 
 void ArgValMkmat2::SetOption(int argc, char* argv[], option* long_options)
@@ -108,7 +111,8 @@ void ArgValMkmat2::Usage(FILE* fp) const
 {
     fprintf(fp,
             "usage: %s [--help (0)] [--verbose (0)] [--debug (0)] "
-            "infile1  infile2  freq_info_file  outfile\n",
+            "infile1  infile2  freq_info_file  outdir  outfile_head \n",
             progname_.c_str());
     exit(1);
 }
+

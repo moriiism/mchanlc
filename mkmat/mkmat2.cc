@@ -15,6 +15,12 @@ int main(int argc, char* argv[]){
     argval->Init(argc, argv);
     argval->Print(stdout);
 
+    if( MiIolib::TestFileExist(argval->GetOutdir()) ){
+        char cmd[kLineSize];
+        sprintf(cmd, "mkdir -p %s", argval->GetOutdir().c_str());
+        system(cmd);
+    }
+    
     //
     // freq_info
     //
@@ -45,7 +51,7 @@ int main(int argc, char* argv[]){
     int sorted = MirMath::IsSorted(gd2d_1->GetNdata(),
                                    gd2d_1->GetXvalArr()->GetVal());
     printf("sorted ? = %d\n", sorted);
-    MirQdpTool::MkQdp(gd2d_1, "temp1.qdp", "x,y");
+    // MirQdpTool::MkQdp(gd2d_1, "temp1.qdp", "x,y");
 
     printf("ndata1 = %ld\n", gd2d_1->GetNdata());
 
@@ -56,7 +62,7 @@ int main(int argc, char* argv[]){
     sorted = MirMath::IsSorted(gd2d_2->GetNdata(),
                                gd2d_2->GetXvalArr()->GetVal());
     printf("sorted ? = %d\n", sorted);
-    MirQdpTool::MkQdp(gd2d_2, "temp2.qdp", "x,y");
+    // MirQdpTool::MkQdp(gd2d_2, "temp2.qdp", "x,y");
 
     printf("ndata2 = %ld\n", gd2d_2->GetNdata());
     
@@ -105,7 +111,7 @@ int main(int argc, char* argv[]){
 
     // matrix
     // (nrow, ncol)
-    long nrow = gd2d_1->GetNdata() + gd2d_2->GetNdata();
+    long nrow = nrow_1 + nrow_2;
     long ncol = nfreq * 2 * 2;
     double** mat = new double* [nrow];
     for(long irow = 0; irow < nrow; irow ++){
@@ -125,8 +131,65 @@ int main(int argc, char* argv[]){
             mat[nrow_1 + irow][ncol_1 + icol] = mat_2[irow][icol];
         }
     }
+
+    // matrix weighted
+    // (nrow, ncol)
+    double** mat_w = new double* [nrow];
+    for(long irow = 0; irow < nrow; irow ++){
+        mat_w[irow] = new double [ncol];
+        for(long icol = 0; icol < ncol; icol ++){
+            mat_w[irow][icol] = 0.0;
+        }
+    }
+    for(long irow = 0; irow < nrow_1; irow ++){
+        for(long icol = 0; icol < ncol_1; icol ++){
+            mat_w[irow][icol] = mat_1[irow][icol] * sqrt(nrow_2);
+        }
+    }
+    for(long irow = 0; irow < nrow_2; irow ++){
+        for(long icol = 0; icol < ncol_2; icol ++){
+            mat_w[nrow_1 + irow][ncol_1 + icol] = mat_2[irow][icol] * sqrt(nrow_1);
+        }
+    }
     
-    FILE* fp = fopen(argval->GetOutfile().c_str(), "w");
+    //
+    // output
+    //
+
+    // matrix A1
+    char outfile_1[kLineSize];
+    sprintf(outfile_1, "%s/%s_1.dat",
+            argval->GetOutdir().c_str(),
+            argval->GetOutfileHead().c_str());
+    FILE* fp1 = fopen(outfile_1, "w");
+    for(long irow = 0; irow < nrow_1; irow ++){
+        for(long icol = 0; icol < ncol_1; icol ++){
+            fprintf(fp1, "%e ", mat_1[irow][icol]);
+        }
+        fprintf(fp1, "\n");
+    }
+    fclose(fp1);
+
+    // matrix A2
+    char outfile_2[kLineSize];
+    sprintf(outfile_2, "%s/%s_2.dat",
+            argval->GetOutdir().c_str(),
+            argval->GetOutfileHead().c_str());
+    FILE* fp2 = fopen(outfile_2, "w");
+    for(long irow = 0; irow < nrow_2; irow ++){
+        for(long icol = 0; icol < ncol_2; icol ++){
+            fprintf(fp2, "%e ", mat_2[irow][icol]);
+        }
+        fprintf(fp2, "\n");
+    }
+    fclose(fp2);
+
+    // matrix A
+    char outfile_12[kLineSize];
+    sprintf(outfile_12, "%s/%s_12.dat",
+            argval->GetOutdir().c_str(),
+            argval->GetOutfileHead().c_str());
+    FILE* fp = fopen(outfile_12, "w");
     for(long irow = 0; irow < nrow; irow ++){
         for(long icol = 0; icol < ncol; icol ++){
             fprintf(fp, "%e ", mat[irow][icol]);
@@ -134,6 +197,20 @@ int main(int argc, char* argv[]){
         fprintf(fp, "\n");
     }
     fclose(fp);
+
+    // matrix A weighted
+    char outfile_12_w[kLineSize];
+    sprintf(outfile_12_w, "%s/%s_12_w.dat",
+            argval->GetOutdir().c_str(),
+            argval->GetOutfileHead().c_str());
+    FILE* fpw = fopen(outfile_12_w, "w");
+    for(long irow = 0; irow < nrow; irow ++){
+        for(long icol = 0; icol < ncol; icol ++){
+            fprintf(fpw, "%e ", mat_w[irow][icol]);
+        }
+        fprintf(fpw, "\n");
+    }
+    fclose(fpw);
     
     delete argval;
     
