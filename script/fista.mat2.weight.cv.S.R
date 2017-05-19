@@ -22,8 +22,8 @@ args <- commandArgs(TRUE)
 infile1     = args[1]
 infile2     = args[2]
 freq.file   = args[3]
-nlambda     = as.integer(args[4])
+lambda.file = args[4]
+nfold       = as.integer(args[5])
+outdir      = args[6]
 
-fista.mat2.weight.cv(infile1, infile2, freq.file, nlambda)
-
-
+fista.mat2.weight.cv(infile1, infile2, freq.file, lambda.file, nfold, outdir)
