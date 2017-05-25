@@ -68,10 +68,12 @@ fista.mat2.weight.slide <- function(infile1, infile2, freq.file, lambda, slide.f
     ##
     slide.vec  = GetPointLin(slide.npoint, slide.lo, slide.up)
 
-    power.opt.lagplus.vec   = numeric(0)
-    power.opt.lagminus.vec  = numeric(0)
-    power.xray.lagplus.vec  = numeric(0)
-    power.xray.lagminus.vec = numeric(0)
+    power.opt.lagplus.vec    = numeric(0)
+    power.opt.lagminus.vec   = numeric(0)
+    power.xray.lagplus.vec   = numeric(0)
+    power.xray.lagminus.vec  = numeric(0)
+    ratio.lag.power.opt.vec  = numeric(0)
+    ratio.lag.power.xray.vec = numeric(0)
     for(islide in 1:slide.npoint){
         win.lo = slide.vec[islide]
         win.up = win.lo + slide.width
@@ -88,7 +90,7 @@ fista.mat2.weight.slide <- function(infile1, infile2, freq.file, lambda, slide.f
         outfile2.sel = sprintf("%s/data2.dat", outdir.slide)
         write(t(data2.sel.df), file=outfile2.sel, ncolumns = 2)
 
-        power.ret = FistaMat2Weight(outfile1.sel, outfile2.sel, freq.file, lambda, outdir.slide)
+        power.ret = FistaMat2Weight(outfile1.sel, outfile2.sel, freq.file, lambda, slide.width, outdir.slide)
 
         power.opt.lagplus   = power.ret[1]
         power.opt.lagminus  = power.ret[2]
@@ -98,13 +100,194 @@ fista.mat2.weight.slide <- function(infile1, infile2, freq.file, lambda, slide.f
         power.opt.lagminus.vec  = c(power.opt.lagminus.vec, power.opt.lagminus)
         power.xray.lagplus.vec  = c(power.xray.lagplus.vec, power.xray.lagplus)
         power.xray.lagminus.vec = c(power.xray.lagminus.vec, power.xray.lagminus)
+
+        ratio.lag.power.opt  = power.opt.lagplus / (power.opt.lagplus + power.opt.lagminus)
+        ratio.lag.power.xray = power.xray.lagplus / (power.xray.lagplus + power.xray.lagminus)
+        ratio.lag.power.opt.vec = c(ratio.lag.power.opt.vec, ratio.lag.power.opt)
+        ratio.lag.power.xray.vec = c(ratio.lag.power.xray.vec, ratio.lag.power.xray)
+        
     }
-    power.df = cbind(slide.vec, power.opt.lagplus.vec, power.opt.lagminus.vec, power.xray.lagplus.vec, power.xray.lagminus.vec)
-    write(t(power.df), file="pow.dat")
+
+    slide.center.vec = slide.vec + slide.width / 2.0
+    power.df = cbind(slide.center.vec, power.opt.lagplus.vec, power.opt.lagminus.vec, power.xray.lagplus.vec, power.xray.lagminus.vec)
+    outfile = sprintf("%s/pow.dat", outdir)
+    write(t(power.df), file=outfile)
+
+    WritePowQdp(data1.df, data2.df, slide.center.vec,
+                power.opt.lagplus.vec, power.xray.lagplus.vec, power.opt.lagminus.vec, power.xray.lagminus.vec, outdir)
+    WriteRatioLagQdp(data1.df, data2.df, slide.center.vec,
+                     ratio.lag.power.opt.vec, ratio.lag.power.xray.vec, outdir)
 }
 
+WritePowQdp <- function(data1.df, data2.df, slide.center.vec,
+                        power.opt.lagplus.vec, power.xray.lagplus.vec, power.opt.lagminus.vec, power.xray.lagminus.vec, outdir)
+{
+    nrow1 = nrow(data1.df)
+    nrow2 = nrow(data2.df)
 
-FistaMat2Weight <-function(infile1, infile2, freq.file, lambda, outdir)
+    
+    outfile = sprintf("%s/pow.qdp", outdir)
+    sink(outfile)
+    printf("skip sing\n")
+    printf("\n")
+    printf("! optical\n")
+    for(irow in 1:nrow1){
+        printf("%e %e\n", data1.df[irow, 1], data1.df[irow, 2])
+    }
+    printf("\n")
+    printf("no\n")
+    printf("\n")
+    printf("! X-ray\n")
+    for(irow in 1:nrow2){
+        printf("%e %e\n", data2.df[irow, 1], data2.df[irow, 2])
+    }
+
+    printf("\n")
+    printf("no\n")
+    printf("\n")
+    printf("! power opt.lagplus\n")
+    for(inum in 1:length(slide.center.vec)){
+        printf("%e %e\n", slide.center.vec[inum], power.opt.lagplus.vec[inum])
+    }
+    printf("\n")
+    printf("no\n")
+    printf("\n")
+    printf("! power xray.lagplus\n")
+    for(inum in 1:length(slide.center.vec)){
+        printf("%e %e\n", slide.center.vec[inum], power.xray.lagplus.vec[inum])
+    }
+
+    printf("\n")
+    printf("no\n")
+    printf("\n")
+    printf("! power opt.lagminus\n")
+    for(inum in 1:length(slide.center.vec)){
+        printf("%e %e\n", slide.center.vec[inum], power.opt.lagminus.vec[inum])
+    }
+    printf("\n")
+    printf("no\n")
+    printf("\n")
+    printf("! power xray.lagminus\n")
+    for(inum in 1:length(slide.center.vec)){
+        printf("%e %e\n", slide.center.vec[inum], power.xray.lagminus.vec[inum])
+    }
+    printf("\n")
+
+    printf("la file\n")
+    printf("time off\n")
+    printf("lw 5\n")
+    printf("csize 1.2\n")
+    printf("la rot\n")
+    printf("\n")
+    printf("win 1\n")
+    printf("yplot 1 2\n")
+    printf("loc  0.1 0.44999999 1 0.94999999\n")    
+    printf("la y Light Curve\n")
+    printf("la pos y 5.0\n")
+    printf("lab nx off\n")
+    printf("\n")
+    printf("win 2\n")
+    printf("yplot 3 4 5 6\n")
+    printf("loc  0.1 4.99999821E-2 1 0.54999995\n")
+    printf("la y Power\n")
+    printf("la pos y 5.0\n")
+
+    printf("col 1 on 3\n")
+    printf("col 2 on 4\n")
+    printf("lst 1 on 3\n")
+    printf("lst 1 on 4\n")    
+
+    printf("col 1 on 5\n")
+    printf("col 2 on 6\n")
+    printf("lst 2 on 5\n")
+    printf("lst 2 on 6\n")    
+  
+    printf("la x time (MJD - 57388)\n")
+    printf("win all\n")
+    printf("\n")
+    printf("\n")
+    printf("\n")    
+    sink()
+}    
+
+
+WriteRatioLagQdp <- function(data1.df, data2.df, slide.center.vec,
+                             ratio.lag.power.opt.vec, ratio.lag.power.xray.vec, outdir)
+
+{
+    nrow1 = nrow(data1.df)
+    nrow2 = nrow(data2.df)
+    
+    outfile = sprintf("%s/ratio_lag_pm.qdp", outdir)
+    sink(outfile)
+    printf("skip sing\n")
+    printf("\n")
+    printf("! optical\n")
+    for(irow in 1:nrow1){
+        printf("%e %e\n", data1.df[irow, 1], data1.df[irow, 2])
+    }
+    printf("\n")
+    printf("no\n")
+    printf("\n")
+    printf("! X-ray\n")
+    for(irow in 1:nrow2){
+        printf("%e %e\n", data2.df[irow, 1], data2.df[irow, 2])
+    }
+
+    printf("\n")
+    printf("no\n")
+    printf("\n")
+    printf("! ratio.lag.power.opt\n")
+    for(inum in 1:length(slide.center.vec)){
+        printf("%e %e\n", slide.center.vec[inum], ratio.lag.power.opt.vec[inum])
+    }
+    printf("\n")
+    printf("no\n")
+    printf("\n")
+    printf("! ratio.lag.power.xray\n")
+    for(inum in 1:length(slide.center.vec)){
+        printf("%e %e\n", slide.center.vec[inum], ratio.lag.power.xray.vec[inum])
+    }
+    printf("\n")
+
+    printf("la file\n")
+    printf("time off\n")
+    printf("lw 5\n")
+    printf("csize 1.2\n")
+    printf("la rot\n")
+    printf("\n")
+    printf("win 1\n")
+    printf("yplot 1 2\n")
+    printf("loc  0.1 0.44999999 1 0.94999999\n")    
+    printf("la y Light Curve\n")
+    printf("la pos y 5.0\n")
+    printf("lab nx off\n")
+    printf("\n")
+    printf("win 2\n")
+    printf("yplot 3 4 \n")
+    printf("loc  0.1 4.99999821E-2 1 0.54999995\n")
+    printf("la y P(+) / [P(+) + P(-)] \n")
+    printf("la pos y 5.0\n")
+    printf("r y 0 1 \n")
+
+    printf("col 1 on 3\n")
+    printf("col 2 on 4\n")
+  
+    printf("la x time (MJD - 57388)\n")
+    printf("win all\n")
+    printf("\n")
+    printf("\n")
+    printf("\n")    
+    sink()
+}    
+
+
+
+
+
+
+
+FistaMat2Weight <-function(infile1, infile2, freq.file, lambda, slide.width, outdir)
 {
     ##
     ## make fourier matrix file
@@ -161,11 +344,6 @@ FistaMat2Weight <-function(infile1, infile2, freq.file, lambda, outdir)
     data.df = rbind(data1.df, data2.df)
         
     h.vec = as.vector(c(data1.df[,2] * sqrt(nrow2), data2.df[,2] * sqrt(nrow1) ))
-
-    hist.lo = -0.005
-    hist.up =  0.005
-    hist.nbin = 200
-    hist.delta = (hist.up - hist.lo) / hist.nbin
         
     tolerance = 5.e-8
     eta = 1.2
@@ -232,18 +410,22 @@ FistaMat2Weight <-function(infile1, infile2, freq.file, lambda, outdir)
             norm.opt.delta.time12  = sqrt( x[i]**2 + x[i + N]**2)
             norm.xray.delta.time12 = sqrt( x[i + 2 * N]**2 + x[i + 3 * N]**2)
 
-            ## select lagplus between X and Opt
-            if(0.0 <= delta.time12 ){
-                x.lagplus[i] = x[i]
-                x.lagplus[i + N] = x[i + N]
-                x.lagplus[i + 2 * N] = x[i + 2 * N]
-                x.lagplus[i + 3 * N] = x[i + 3 * N]
-            }
-            if(0.0 > delta.time12 ){
-                x.lagminus[i] = x[i]
-                x.lagminus[i + N] = x[i + N]
-                x.lagminus[i + 2 * N] = x[i + 2 * N]
-                x.lagminus[i + 3 * N] = x[i + 3 * N]
+            period = 1./freq
+            if(period < slide.width){
+                
+                ## select lagplus between X and Opt
+                if(0.0 <= delta.time12 ){
+                    x.lagplus[i] = x[i]
+                    x.lagplus[i + N] = x[i + N]
+                    x.lagplus[i + 2 * N] = x[i + 2 * N]
+                    x.lagplus[i + 3 * N] = x[i + 3 * N]
+                }
+                if(0.0 > delta.time12 ){
+                    x.lagminus[i] = x[i]
+                    x.lagminus[i + N] = x[i + N]
+                    x.lagminus[i + 2 * N] = x[i + 2 * N]
+                    x.lagminus[i + 3 * N] = x[i + 3 * N]
+                }
             }
 
 

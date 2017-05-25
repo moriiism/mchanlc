@@ -211,6 +211,30 @@ fista.mat2.weight <- function(infile1, infile2, freq.file, lambda, outdir)
     x.lagplus.mat = cbind(c(1:(length(x.lagplus)/2),1:(length(x.lagplus)/2)), x.lagplus)
     write(t(x.lagplus.mat), file=outfile, ncolumns = 2)
 
+
+    ##
+    ## lagminus
+    ##
+    h.rec.lagminus.vec = A.mat %*% x.lagminus
+
+    lc.lagminus.rec = cbind(data.df[, 1], h.rec.lagminus.vec)
+    outfile = sprintf("%s/rec_lagminus.dat", outdir)
+    write(t(lc.lagminus.rec), file=outfile, ncolumns = 2)
+
+    outfile = sprintf("%s/x_lagminus.dat", outdir)
+    x.lagminus.mat = cbind(c(1:(length(x.lagminus)/2),1:(length(x.lagminus)/2)), x.lagminus)
+    write(t(x.lagminus.mat), file=outfile, ncolumns = 2)
+
+
+    ##
+    ## lagplus + lagminus
+    ##
+    h.rec.lagboth.vec =  h.rec.lagminus.vec + h.rec.lagplus.vec
+    lc.lagboth.rec = cbind(data.df[, 1], h.rec.lagboth.vec)
+    outfile = sprintf("%s/rec_lagboth.dat", outdir)
+    write(t(lc.lagboth.rec), file=outfile, ncolumns = 2)
+
+    
     ##
     ## power
     ##
