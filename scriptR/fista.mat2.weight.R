@@ -138,6 +138,7 @@ fista.mat2.weight <- function(infile1, infile2, freq.file, lambda, outdir)
     norm.opt.delta.time12.vec = numeric(0)
     norm.xray.delta.time12.vec = numeric(0)
     period.vec = numeric(0)
+    freq.vec = numeric(0)
 
     x.lagplus  = rep(0.0, ncol)
     x.lagminus = rep(0.0, ncol)
@@ -177,15 +178,16 @@ fista.mat2.weight <- function(infile1, infile2, freq.file, lambda, outdir)
             norm.opt.delta.time12.vec = c(norm.opt.delta.time12.vec, norm.opt.delta.time12)
             norm.xray.delta.time12.vec = c(norm.xray.delta.time12.vec, norm.xray.delta.time12)
             period.vec = c(period.vec, 1./freq)
+            freq.vec = c(freq.vec, freq)
         }
     }
 
     ##
-    ## lag, norm, norm.opt, norm.xray, period
+    ## lag, norm, norm.opt, norm.xray, period, freq
     ##
-    sum.df = cbind(delta.time12.vec, norm.delta.time12.vec, norm.opt.delta.time12.vec, norm.xray.delta.time12.vec, period.vec)
+    sum.df = cbind(delta.time12.vec, norm.delta.time12.vec, norm.opt.delta.time12.vec, norm.xray.delta.time12.vec, period.vec, freq.vec)
     outfile = sprintf("%s/sum.dat", outdir)
-    write(t(sum.df), file=outfile, ncolumns = 5)
+    write(t(sum.df), file=outfile, ncolumns = 6)
 
     h.rec.vec = A.mat %*% x
 

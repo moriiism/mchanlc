@@ -7,15 +7,13 @@
 ### trigonometric functions (sine function),
 ### using frequency and phase information, on GTI duration.
 ###
-### 2017.03.31 M.Morii
+### 2017.06.07 M.Morii
 ###
 ###
 ###
 
-mitooldir = "/home/morii/work/github/moriiism/mitool"
+mitooldir   = "/home/morii/work/github/moriiism/mitool"
 mchanlc.dir = "/home/morii/work/github/moriiism/mchanlc"
-
-###
 
 source( paste(mitooldir, "script/mirlib/iolib.R", sep="/") )
 source( paste(mchanlc.dir, "scriptR/sim.trig.R", sep="/") )
@@ -71,4 +69,3 @@ for(igti in 1:nrow(gti.itime.df)){
 
 lc = cbind(time.vec, oval.vec)
 write(t(lc), file=outfile, ncolumns = 2)
-

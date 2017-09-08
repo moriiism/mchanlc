@@ -80,6 +80,8 @@ fista.mat2.weight.slide <- function(infile1, infile2, freq.file, lambda, slide.f
         outdir.slide = sprintf("%s/slide_%2.2d", outdir, islide)
         dir.create(outdir.slide)
 
+        slide.center = win.lo + slide.width / 2.0
+
         ##
         ## select data
         ##
@@ -90,7 +92,7 @@ fista.mat2.weight.slide <- function(infile1, infile2, freq.file, lambda, slide.f
         outfile2.sel = sprintf("%s/data2.dat", outdir.slide)
         write(t(data2.sel.df), file=outfile2.sel, ncolumns = 2)
 
-        power.ret = FistaMat2Weight(outfile1.sel, outfile2.sel, freq.file, lambda, slide.width, outdir.slide)
+        power.ret = FistaMat2Weight(outfile1.sel, outfile2.sel, freq.file, lambda, slide.width, slide.center, outdir.slide)
 
         power.opt.lagplus   = power.ret[1]
         power.opt.lagminus  = power.ret[2]
@@ -287,7 +289,7 @@ WriteRatioLagQdp <- function(data1.df, data2.df, slide.center.vec,
 
 
 
-FistaMat2Weight <-function(infile1, infile2, freq.file, lambda, slide.width, outdir)
+FistaMat2Weight <-function(infile1, infile2, freq.file, lambda, slide.width, slide.center, outdir)
 {
     ##
     ## make fourier matrix file
@@ -445,6 +447,11 @@ FistaMat2Weight <-function(infile1, infile2, freq.file, lambda, slide.width, out
     outfile = sprintf("%s/sum.dat", outdir)
     write(t(sum.df), file=outfile, ncolumns = 5)
 
+    sum.2.df = cbind(slide.center, delta.time12.vec, norm.delta.time12.vec, norm.opt.delta.time12.vec, norm.xray.delta.time12.vec, period.vec)
+    outfile = sprintf("%s/sum2.dat", outdir)
+    write(t(sum.2.df), file=outfile, ncolumns = 6)    
+
+    
     h.rec.vec = A.mat %*% x
 
     lc.rec = cbind(data.df[, 1], h.rec.vec)
